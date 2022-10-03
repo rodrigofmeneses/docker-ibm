@@ -1,2 +1,5 @@
 # docker-ibm
-Learning Docker with IBM course. 
+Anotações do mini curso de Docker.
+
+Disponível gratuitamente em:
+[Docker Essentials: A Developer Introduction](https://cognitiveclass.ai/courses/docker-essentials)
