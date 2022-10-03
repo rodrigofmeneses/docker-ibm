@@ -76,7 +76,7 @@ docker image ls
 docker run -p 5001:5000 -d python-hello-world
 ```
 
-A flag -p mapeia em qual porta que o container irá rodar em seu host. Nesse caso, estamos mapenaod que o Python app rode na porta 5000 dentro do container para a porta 5001 dentro do host. Note que se a porta 5001 já estive sendo usada por outra aplicação no host, precisaremos trocar o 5001 para outro valor, como 5002 por exemplo.
+A flag -p mapeia em qual porta que o container irá rodar em seu host. Nesse caso, estamos indicando que o Python app rode na porta 5000 dentro do container para a porta 5001 dentro do host. Note que se a porta 5001 já estive sendo usada por outra aplicação no host, precisaremos trocar o 5001 para outro valor, como 5002 por exemplo.
 
 2. Vamos na porta http://localhost:5001 em nosso browser pra ver se deu certo. Deve aparecer um "Hello world!".
 
@@ -120,3 +120,45 @@ docker push [dockerhub username]/python-hello-world
 ```
 docker push [dockerhub username]/python-hello-world
 ```
+
+# Parte 6
+
+## Entendendo camadas da imagem
+
+Considerando o que foi usado:
+
+```
+FROM python:3.10.5
+RUN pip install flask
+CMD ["python","app.py"]
+COPY app.py /app.py
+```
+
+Cada linha é uma camada. Cada camada contém apenas o que há de diferente das camadas antes delas. Para por essas camadas em um único container, o Docker usa o 'union file system' para aninhar essas camadas em uma única visão.
+
+Cada camada da imagem é READ-ONLY exceto a camada do topo, no qual é criada para o container. A camada do container READ/WRITE implementa "copy-on-write", isso signiffica que os arquivos guardados nas camadas inferiores apenas são enviados para ser read/write quando são editados.
+
+A função "copy-on-write" é muito rápida em quase todos os casos. Podemos inspecionar quais arquivos foram enviados para o container com o comando docker diff.
+
+Como as camadas são read-only, elas podem compartilhar imagens que se mantiveram inalterada. Tudo isso faz parte do mecanismo de 'caching' do docker.
+
+Você consegue ver isso de perto quando vai atualizar uma imagem, perceba que várias camadas aparecerão a seguinte mensagem "Layer already exists", e apenas a ultima tem um código criptografado doido. Isso significa que só a ultima camada foi modificada.
+
+# Parte 7
+
+## Removendo containers
+
+1. Para isso inicialmente devemos ver a lista de containers com:
+```docker container ls```
+
+2. Executar:
+   ```docker container stop <container id>```
+3. Remover containers parados com:
+   ```docker system prune```
+
+# Resumão
+ - Usamos o Dockerfile para criar imagems reutilizaveis para nossa aplicação.
+ - Imagens Docker podem ser disponibilizadas no Docker Hub.
+ - Uma imagem docker contém todas as dependencias necessárias para a aplicação rodar. Isso é útil pois não precisaremos lidar com diferenças de ambiente.
+ - Docker usa um sistema de união de camadas reutilizaveis, aquela "copy-on-write", que utiliza o sistema de caching e deixa tudo uma bala de rápido.
+ - Cada linha do Dockerfile cria uma nova camada, e a última é a que será modificada frequentemente, então lembrar de sempre botar o código fonte no fim do arquivo.
